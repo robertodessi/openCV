@@ -99,3 +99,4 @@ rotate180("./datasets/Colosseum.png", "col180")
 rotateLeft("./datasets/Colosseum.png", "colLeft")
 
 rotateRight("./datasets/Colosseum.png", "colRight")
+
