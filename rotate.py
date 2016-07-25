@@ -26,7 +26,7 @@ def rotateLeft(path, name):
 			final.itemset((y, x, 2), image.item(x, y, 2))
 
 	# writing output image
-	cv2.imwrite("./results/" + name + ".png", final)
+	cv2.imwrite("./results/rotate/" + name + ".png", final)
 
 
 def copy(path, name):
@@ -48,7 +48,7 @@ def copy(path, name):
 			final.itemset((x, y, 2), image.item(x, y, 2))
 
 	# writing output image
-	cv2.imwrite("./results/" + name + ".png", final)
+	cv2.imwrite("./results/rotate/" + name + ".png", final)
 
 def rotate180(path, name):
 
@@ -69,7 +69,7 @@ def rotate180(path, name):
 			final.itemset((height-1-x, width-1-y, 2), image.item(x, y, 2))
 
 	# writing output
-	cv2.imwrite("./results/" + name + ".png", final)
+	cv2.imwrite("./results/rotate/" + name + ".png", final)
 
 def rotateRight(path, name):
 
@@ -89,7 +89,7 @@ def rotateRight(path, name):
 			# copying red pixel
 			final.itemset((width-1-y, height-1-x, 2), image.item(x, y, 2))
 
-	cv2.imwrite("./results/" + name + ".png", final)
+	cv2.imwrite("./results/rotate/" + name + ".png", final)
 
 
 copy("./datasets/Colosseum.png", "colCopy")
