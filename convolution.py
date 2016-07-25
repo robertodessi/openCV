@@ -92,6 +92,52 @@ def box_blur(path, name):
 
 	print conv
 
+	if img is None:
+		raise Exception('can\'t open image, path might be wrong')
+
+	conv_h, conv_w = conv.shape
+
+	h = img.shape[0]
+	w = img.shape[1]
+
+	min_ind = -(conv_h/2)
+	max_ind = (conv_w/2)+1
+
+	limit_h = h
+	limit_w = w
+
+	final = np.zeros((h, w, 3), np.uint8)	
+
+	for x in xrange(h):
+		for y in xrange(w):
+			if x+max_ind >= limit_h or y+max_ind >= limit_w or x+min_ind < 0 or y+min_ind < 0:
+				continue
+			else:
+				mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
+
+				b, g, r  = compute(mat, conv, conv_h, conv_w)
+
+			# blu pixel 
+			final.itemset((x, y, 0), b)
+			# green pixel
+			final.itemset((x, y, 1), g)
+			# red pixel
+			final.itemset((x, y, 2), r)				
+
+	# adding 2pixel wide black frame to the image
+	black_frame(final, h, w)
+
+	# writing output
+	cv2.imwrite("./results/conv/" + name +".png", final)
+
+
+def gaussian_blur(path, name):
+
+	img = cv2.imread(path)	
+
+	conv = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
+
+	print conv
 
 	if img is None:
 		raise Exception('can\'t open image, path might be wrong')
@@ -132,6 +178,9 @@ def box_blur(path, name):
 	cv2.imwrite("./results/conv/" + name +".png", final)
 
 
+
 sharpen("./datasets/C.png", "sharpen")
 
 box_blur("./datasets/C.png", "box_blur")
+
+gaussian_blur("./datasets/C.png", "gaussian_blur")
