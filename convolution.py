@@ -1,5 +1,6 @@
 import numpy as np 
 import cv2 
+
 '''
 import argparse
 
@@ -10,13 +11,6 @@ ap.add_argument("images", metavar = "IMAGES", type = str, help = "path to the im
 
 args = vars(ap.parse_args())
 '''
-# adding 2pixel wide black frame to the image
-def black_frame(output, h, w):
-
-	output[0:2, :] = (0, 0, 0) 
-	output[h-2:h, :] = (0, 0, 0) 
-	output[:, 0:2] = (0, 0, 0) 
-	output[: w-20:w] = (0, 0, 0) 
 	
 # sharpen convolutional kernel	
 def sharpen(path, name):
@@ -69,7 +63,15 @@ def sharpen(path, name):
 	# writing output
 	cv2.imwrite("./results/conv/" + name +".png", final)
 
+# aux method for adding 2pixel wide black frame to the image
+def black_frame(output, h, w):
 
+	output[0:2, :] = (0, 0, 0) 
+	output[h-2:h, :] = (0, 0, 0) 
+	output[:, 0:2] = (0, 0, 0) 
+	output[: w-20:w] = (0, 0, 0) 
+
+# aux method to calculate the right pixel value (weighted w/ each kernel element)
 def compute(mat, conv, h, w):
 
 	b, g, r = 0, 0, 0
@@ -81,106 +83,78 @@ def compute(mat, conv, h, w):
 			g = g + (mat[x, y, 1]*conv[x, y])
 			r = r + (mat[x, y, 2]*conv[x, y])
 			
-	return b, g, r
+	#return b, g, r
+	return r,g,b
 
+def filter_image(path):
 
-def box_blur(path, name):
+	def work(matrix, name):
 
-	img = cv2.imread(path)	
+		img = cv2.imread(path)	
 
-	conv = np.matrix([[float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9]])
+		conv = matrix
 
-	print conv
+		# checkingh I could actually open the img
+		if img is None:
+			raise Exception('can\'t open image, path might be wrong')
 
-	if img is None:
-		raise Exception('can\'t open image, path might be wrong')
+		conv_h, conv_w = conv.shape
 
-	conv_h, conv_w = conv.shape
+		h = img.shape[0]
+		w = img.shape[1]
 
-	h = img.shape[0]
-	w = img.shape[1]
+		# getting the min and max of the convolutional matrix (kernel)
+		min_ind = -(conv_h/2)
+		max_ind = (conv_w/2)+1
 
-	min_ind = -(conv_h/2)
-	max_ind = (conv_w/2)+1
+		# won't compute 2pixel wide border, setting a black frame instead
+		limit_h = h
+		limit_w = w
 
-	limit_h = h
-	limit_w = w
+		final = np.zeros((h, w, 3), np.uint8)	
 
-	final = np.zeros((h, w, 3), np.uint8)	
+		for x in xrange(h):
+			for y in xrange(w):
+				if x+max_ind >= limit_h or y+max_ind >= limit_w or x+min_ind < 0 or y+min_ind < 0:
+					continue
+				else:
+					mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
 
-	for x in xrange(h):
-		for y in xrange(w):
-			if x+max_ind >= limit_h or y+max_ind >= limit_w or x+min_ind < 0 or y+min_ind < 0:
-				continue
-			else:
-				mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
+					#b, g, r  = compute(mat, conv, conv_h, conv_w)
+					b, g, r  = compute(mat, conv, conv_h, conv_w)
 
-				b, g, r  = compute(mat, conv, conv_h, conv_w)
+				# blu pixel 
+				final.itemset((x, y, 0), b)
+				# green pixel
+				final.itemset((x, y, 1), g)
+				# red pixel
+				final.itemset((x, y, 2), r)				
 
-			# blu pixel 
-			final.itemset((x, y, 0), b)
-			# green pixel
-			final.itemset((x, y, 1), g)
-			# red pixel
-			final.itemset((x, y, 2), r)				
+		# adding 2pixel wide black frame to the image
+		black_frame(final, h, w)
 
-	# adding 2pixel wide black frame to the image
-	black_frame(final, h, w)
+		# writing output
+		cv2.imwrite("./results/conv/" + name +".png", final)
 
-	# writing output
-	cv2.imwrite("./results/conv/" + name +".png", final)
+	return work
 
+#sharpen("./datasets/C.png", "sharpen")
 
-def gaussian_blur(path, name):
+x = filter_image("./datasets/try.png")
 
-	img = cv2.imread(path)	
+# edge detection
+conv_edge_detection = np.matrix([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
 
-	conv = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
+# sharpen
+conv_sharpen = np.matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
-	print conv
+# gaussian blur
+conv_gauss = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
 
-	if img is None:
-		raise Exception('can\'t open image, path might be wrong')
+# box blur
+conv_blur = np.matrix([[float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9]])
 
-	conv_h, conv_w = conv.shape
-
-	h = img.shape[0]
-	w = img.shape[1]
-
-	min_ind = -(conv_h/2)
-	max_ind = (conv_w/2)+1
-
-	limit_h = h
-	limit_w = w
-
-	final = np.zeros((h, w, 3), np.uint8)	
-
-	for x in xrange(h):
-		for y in xrange(w):
-			if x+max_ind >= limit_h or y+max_ind >= limit_w or x+min_ind < 0 or y+min_ind < 0:
-				continue
-			else:
-				mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
-
-				b, g, r  = compute(mat, conv, conv_h, conv_w)
-
-			# blu pixel 
-			final.itemset((x, y, 0), b)
-			# green pixel
-			final.itemset((x, y, 1), g)
-			# red pixel
-			final.itemset((x, y, 2), r)				
-
-	# adding 2pixel wide black frame to the image
-	black_frame(final, h, w)
-
-	# writing output
-	cv2.imwrite("./results/conv/" + name +".png", final)
+x(conv_edge_detection, "output")
 
 
 
-sharpen("./datasets/C.png", "sharpen")
-
-box_blur("./datasets/C.png", "box_blur")
-
-gaussian_blur("./datasets/C.png", "gaussian_blur")
