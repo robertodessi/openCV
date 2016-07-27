@@ -1,5 +1,6 @@
 import numpy as np 
 import cv2 
+import threading as th
 
 '''
 import argparse
@@ -83,8 +84,8 @@ def compute(mat, conv, h, w):
 			g = g + (mat[x, y, 1]*conv[x, y])
 			r = r + (mat[x, y, 2]*conv[x, y])
 			
-	#return b, g, r
-	return r,g,b
+	return b, g, r
+
 
 def filter_image(path):
 
@@ -120,7 +121,6 @@ def filter_image(path):
 				else:
 					mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
 
-					#b, g, r  = compute(mat, conv, conv_h, conv_w)
 					b, g, r  = compute(mat, conv, conv_h, conv_w)
 
 				# blu pixel 
@@ -138,23 +138,105 @@ def filter_image(path):
 
 	return work
 
+
+def filter_image_thread(path):
+
+	def work(matrix, name):
+
+		img = cv2.imread(path)	
+
+#need to pass as parameters: h, w, matrix, output
+
+		# checkingh I could actually open the img
+		if img is None:
+			raise Exception('can\'t open image, path might be wrong')
+
+
+		h = img.shape[0]
+		w = img.shape[1]
+
+		final = np.zeros((h, w, 3), np.uint8)	
+			
+		t1 = th.Thread(target = thread_work, args = (0, h/2+2, 0, w/2+2, matrix, img, final))
+		t2 = th.Thread(target = thread_work, args = (h/2, h, 0, w/2+2, matrix, img, final))
+		t3 = th.Thread(target = thread_work, args = (0, h/2+2, w/2, w, matrix, img, final))
+		t4 = th.Thread(target = thread_work, args = (h/2, h, w/2, w, matrix, img, final))
+
+
+		t1.deamon = True
+		t2.deamon = True
+		t3.deamon = True
+		t4.deamon = True
+
+		t1.start()
+		t2.start()
+		t3.start()
+		t4.start()
+
+		t1.join()
+		t2.join()
+		t3.join()
+		t4.join()
+
+		# adding 2pixel wide black frame to the image
+		black_frame(final, h, w)
+
+		# writing output
+		cv2.imwrite("./results/conv/" + name +".png", final)
+
+	return work
+
+def thread_work(start_h, finish_h, start_w, finish_w, matrix, img, output):
+
+	final = output
+
+	conv = matrix
+
+	conv_h, conv_w = conv.shape
+
+	# getting the min and max of the convolutional matrix (kernel)
+	min_ind = -(conv_h/2)
+	max_ind = (conv_w/2)+1
+
+	limit_h = finish_h
+	limit_w = finish_w
+
+	for x in xrange(start_h, finish_h):
+		for y in xrange(start_w, finish_w):
+			if x+max_ind >= limit_h or y+max_ind >= limit_w or x+min_ind < 0 or y+min_ind < 0:
+				continue
+			else:
+				mat = img[(x+min_ind):(x+max_ind), (y+min_ind):(y+max_ind)]
+
+				# can improve trying to apply currying to compute
+				b, g, r  = compute(mat, conv, conv_h, conv_w)
+
+			# blu pixel 
+			final.itemset((x, y, 0), b)
+			# green pixel
+			final.itemset((x, y, 1), g)
+			# red pixel
+			final.itemset((x, y, 2), r)				
+
+
+
 #sharpen("./datasets/C.png", "sharpen")
 
-x = filter_image("./datasets/try.png")
+x = filter_image_thread("./datasets/C.png")
 
 # edge detection
-conv_edge_detection = np.matrix([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
+#conv_edge_detection = np.matrix([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
 
 # sharpen
-conv_sharpen = np.matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+#conv_sharpen = np.matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
 # gaussian blur
-conv_gauss = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
+#conv_gauss = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
 
 # box blur
 conv_blur = np.matrix([[float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9]])
 
-x(conv_edge_detection, "output")
-
-
-
+#x(conv_edge_detection, "closure_edge")
+#x(conv_sharpen, "closure_sharpen")
+#x(conv_gauss, "closure_gauss")
+x(conv_blur, "closure_blur")
