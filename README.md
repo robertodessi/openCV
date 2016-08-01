@@ -8,3 +8,5 @@ Messing around with some openCV basic stuff to learn how to code python and how 
 - rotateOp1.py: attempt of improve performance on rotate.py
 
 - video.py: just some basic video capture script
+
+- anagram.py: simple algorithm to find the anagrams of a given word
