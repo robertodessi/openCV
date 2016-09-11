@@ -222,21 +222,21 @@ def thread_work(start_h, finish_h, start_w, finish_w, matrix, img, output):
 
 #sharpen("./datasets/C.png", "sharpen")
 
-x = filter_image_thread("./datasets/C.png")
+x = filter_image("./datasets/C.png")
 
 # edge detection
 #conv_edge_detection = np.matrix([[-1, -1, -1], [-1, 8, -1], [-1, -1, -1]])
 
 # sharpen
-#conv_sharpen = np.matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
+conv_sharpen = np.matrix([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
 # gaussian blur
 #conv_gauss = np.matrix([[float(1)/16, float(1)/8, float(1)/16], [float(1)/8, float(1)/4, float(1)/8], [float(1)/16, float(1)/8, float(1)/16]])
 
 # box blur
-conv_blur = np.matrix([[float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9]])
+#conv_blur = np.matrix([[float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9], [float(1)/9, float(1)/9, float(1)/9]])
 
 #x(conv_edge_detection, "closure_edge")
 #x(conv_sharpen, "closure_sharpen")
 #x(conv_gauss, "closure_gauss")
-x(conv_blur, "closure_blur")
+x(conv_sharpen, "sharpen")
