@@ -1,5 +1,5 @@
 # openCV
-Messing around with some openCV basic stuff to learn how to code python and how to use OpenCV
+Messing around with some basic stuff
 
 - convolution.py: computes some basic operations with given kernel on given images
 
