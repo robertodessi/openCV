@@ -5,7 +5,7 @@ def aux2(toAnagram, result = "", res = []):
 		for x in xrange(len(toAnagram)):
 			temp = toAnagram.replace(toAnagram[x], "", 1)
 			res.append(aux2(temp, result + toAnagram[x]))
-
+	return res
 
 
 def t(toAnagram, result = ""):
@@ -18,7 +18,7 @@ def t(toAnagram, result = ""):
 		return res
 		
 
-aux2("ciao")
+print(aux2("ciao"))
 print "==========="
 print t("ciao")
 
